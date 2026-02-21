@@ -103,7 +103,7 @@ export class AuthService {
             this.jwtService.signAsync(
             { sub: user.id, role: user.role },
             {
-                secret: process.env.JWT_ACCESS_SECRET, // Your RS256 Private Key
+                secret: process.env.JWT_PRIVATE_KEY, // Your RS256 Private Key
                 expiresIn: '1h',
             },
             ),
