@@ -73,24 +73,12 @@ export class AuthService {
     }
 
     async updateTokensUseCase(updateTokensDto: UpdateTokensDto): Promise<{accessToken: string, refreshToken: string}> {
-        const payload = await this.jwtService.verifyAsync(updateTokensDto.accessToken, {
-            secret: process.env.JWT_PUBLIC_KEY, // Use your RSA Public Key
-            ignoreExpiration: true,            // This is the magic flag
-        });
-        const userId = payload.sub;
+        const userId = await this.verifyTokensSignature(updateTokensDto.accessToken, updateTokensDto.refreshToken);
         
-        const userWithRefreshToken = await this.repository.getUserWithRefreshToken(userId);
-        if (!userWithRefreshToken) {
-            throw new Error('User or user refresh token not found');
-        }
-        const {user, refreshToken} = userWithRefreshToken;
-
-        const isMatch = await bcrypt.compare(updateTokensDto.refreshToken, refreshToken);
-        if (!isMatch) {
-            throw new Error('Invalid refresh token');
-        }
+        const user = await this.validateDbRefreshToken(userId, updateTokensDto.refreshToken);
         
         const {accessToken: newAccessToken, refreshToken: newRefreshToken} = await this.generateTokens(user);
+
         const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
         await this.repository.updateRefreshTokenHash(userId, hashedRefreshToken, new Date());
 
@@ -99,13 +87,9 @@ export class AuthService {
 
     async generateTokens(user: User): Promise<{accessToken: string, refreshToken: string}> {
         const [accessToken, refreshToken] = await Promise.all([
-            // 1. Access Token (Short-lived)
+            // 1. Access Token (Short-lived) - Use defaul app.module.ts signOptions
             this.jwtService.signAsync(
             { sub: user.id, role: user.role },
-            {
-                secret: process.env.JWT_PRIVATE_KEY, // Your RS256 Private Key
-                expiresIn: '1h',
-            },
             ),
             // 2. Refresh Token (Long-lived)
             this.jwtService.signAsync(
@@ -117,5 +101,40 @@ export class AuthService {
             ),
         ]);
         return { accessToken, refreshToken };
+    }
+
+    async verifyTokensSignature(accessToken: string, refreshToken: string): Promise<string> {
+        try {
+            const [accessPayload, refreshPayload] = await Promise.all([
+                this.jwtService.verifyAsync(accessToken, {
+                    secret: process.env.JWT_PUBLIC_KEY ? process.env.JWT_PUBLIC_KEY.replace(/\\n/g, '\n') : '', // Use your RSA Public Key
+                    ignoreExpiration: true,            // This is the magic flag
+                }),
+                this.jwtService.verifyAsync(refreshToken, {
+                    secret: process.env.JWT_REFRESH_SECRET,
+                    algorithms: ['HS256'],
+                }),
+            ])
+            if (accessPayload.sub !== refreshPayload.sub) {
+                throw new Error('Access token and refresh token do not match');
+            }
+            return accessPayload.sub;
+        } catch (e) {
+            throw new Error('Either access token is invalid or refresh token has expired or is invalid');
+        }
+    }
+
+    async validateDbRefreshToken(userId: string, refreshToken: string): Promise<User> {
+        const userWithRefreshToken = await this.repository.getUserWithRefreshToken(userId);
+        if (!userWithRefreshToken) {
+            throw new Error('User or user refresh token not found');
+        }
+        const {user, refreshToken: dbRefreshToken} = userWithRefreshToken;
+
+        const isMatch = await bcrypt.compare(refreshToken, dbRefreshToken);
+        if (!isMatch) {
+            throw new Error('Provided refresh token is not valid');
+        }
+        return user;
     }
 }
