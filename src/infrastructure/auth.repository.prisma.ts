@@ -75,4 +75,47 @@ export class PrismaAuthRepository implements AuthRepository {
             user.updatedAt
         );
     }
+
+    async updateRefreshTokenHash(id: string, refreshTokenHash: string, updatedAt: Date): Promise<void> {
+        await this.prisma.user.update({
+            where: {
+                id,
+            },
+            data: {
+                refreshToken: refreshTokenHash,
+                updatedAt,
+            },
+        });
+    }
+
+    async getUserWithRefreshToken(id: string): Promise<{user: User, refreshToken: string} | null> {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                id,
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+                refreshToken: true,
+            }
+        });
+        if (!user || !user.refreshToken) {
+            return null;
+        }
+        return {
+            user: new User(
+                user.id,
+                user.email,
+                user.name,
+                user.role,
+                user.createdAt,
+                user.updatedAt
+            ),
+            refreshToken: user.refreshToken,
+        };
+    }
 }

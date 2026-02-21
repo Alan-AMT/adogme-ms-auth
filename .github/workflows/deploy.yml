@@ -49,6 +49,7 @@ jobs:
         secrets: |
           DATABASE_URL=MS_AUTH_DATABASE_URL:latest
           JWT_PRIVATE_KEY=MS_AUTH_JWT_PRIVATE_KEY:latest
+          JWT_PUBLIC_KEY=MS_AUTH_JWT_PUBLIC_KEY:latest
         # Ajustar según necesidades de seguridad
         # flags: '--allow-unauthenticated' 
         flags: '--no-allow-unauthenticated'

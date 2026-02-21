@@ -13,7 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
       privateKey: process.env.JWT_PRIVATE_KEY ? process.env.JWT_PRIVATE_KEY.replace(/\\n/g, '\n') : '', // Load your RS256 private key from env
       signOptions: { 
         algorithm: 'RS256',
-        expiresIn: '1h',
+        // expiresIn: '1h',
         issuer: 'adogme-ms-auth',
         audience: 'adogme-frontend',    // Must match 'audiences' in YAML
         keyid: 'adogme-key-v1', // Must match the 'kid' in your JWKS

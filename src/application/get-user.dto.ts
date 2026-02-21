@@ -1,7 +1,6 @@
-// src/dogs/application/dtos/create-dog.dto.ts
-import { IsString } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
 export class GetUserDto {
-  @IsString()
+  @IsUUID()
   id: string;
 }
