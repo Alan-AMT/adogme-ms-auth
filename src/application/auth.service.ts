@@ -16,7 +16,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async createAdopterUseCase(user: CreateAdopterDto): Promise<User> {
+  async createAdopterUseCase(user: CreateAdopterDto): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     const date = new Date();
     const adopterToCreate = new User(
       uuidv4(),
@@ -28,12 +28,24 @@ export class AuthService {
     );
     const hashedPassword = await bcrypt.hash(user.password, 10);
     await this.repository.createUser(adopterToCreate, hashedPassword);
-    return adopterToCreate;
+    const { accessToken, refreshToken } = await this.generateTokens(adopterToCreate);
+
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.repository.updateRefreshTokenHash(
+      adopterToCreate.id,
+      hashedRefreshToken,
+      new Date(),
+    );
+    return {
+      user: adopterToCreate,
+      accessToken,
+      refreshToken,
+    };
   }
 
-  async createShelterUseCase(user: CreateAdopterDto): Promise<User> {
+  async createShelterUseCase(user: CreateAdopterDto): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     const date = new Date();
-    const shleterToCreate = new User(
+    const shelterToCreate = new User(
       uuidv4(),
       user.email,
       user.name,
@@ -42,8 +54,20 @@ export class AuthService {
       date,
     );
     const hashedPassword = await bcrypt.hash(user.password, 10);
-    await this.repository.createUser(shleterToCreate, hashedPassword);
-    return shleterToCreate;
+    await this.repository.createUser(shelterToCreate, hashedPassword);
+    const { accessToken, refreshToken } = await this.generateTokens(shelterToCreate);
+
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.repository.updateRefreshTokenHash(
+      shelterToCreate.id,
+      hashedRefreshToken,
+      new Date(),
+    );
+    return {
+      user: shelterToCreate,
+      accessToken,
+      refreshToken,
+    };
   }
 
   async getUserUseCase(getUserDto: GetUserDto): Promise<User> {

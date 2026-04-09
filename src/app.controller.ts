@@ -26,7 +26,7 @@ export class AppController {
   @Post('adopter')
   async createAdopter(
     @Body() createAdopterDto: CreateAdopterDto,
-  ): Promise<UserModel> {
+  ): Promise<{ user: UserModel; accessToken: string; refreshToken: string }> {
     try {
       return await this.authService.createAdopterUseCase(createAdopterDto);
     } catch (error) {
@@ -40,7 +40,7 @@ export class AppController {
   @Post('shelter')
   async createShelter(
     @Body() createShelterDto: CreateShelterDto,
-  ): Promise<UserModel> {
+  ): Promise<{ user: UserModel; accessToken: string; refreshToken: string }> {
     try {
       return await this.authService.createShelterUseCase(createShelterDto);
     } catch (error) {
