@@ -18,7 +18,7 @@ import { User as UserModel } from './domain/user.entity.js';
 import { LoginDto } from './application/login.dto.js';
 import { UpdateTokensDto } from './application/update-tokens.dto.js';
 
-@Controller()
+@Controller('auth-ms')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class AppController {
   constructor(private readonly authService: AuthService) {}
