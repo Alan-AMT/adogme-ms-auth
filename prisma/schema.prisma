@@ -28,8 +28,8 @@ model User {
 }
 
 enum Role {
-  SHELTER
-  ADOPTER
+  applicant
+  shelter
 
   @@schema("auth_service")
 }
