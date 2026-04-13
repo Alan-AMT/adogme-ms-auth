@@ -22,7 +22,7 @@ export class AuthService {
       uuidv4(),
       user.email,
       user.name,
-      'ADOPTER',
+      'applicant',
       date,
       date,
     );
@@ -49,7 +49,7 @@ export class AuthService {
       uuidv4(),
       user.email,
       user.name,
-      'SHELTER',
+      'shelter',
       date,
       date,
     );

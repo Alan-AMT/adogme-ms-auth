@@ -10,8 +10,8 @@
 */
 
 export const Role = {
-  SHELTER: 'SHELTER',
-  ADOPTER: 'ADOPTER'
+  applicant: 'applicant',
+  shelter: 'shelter'
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role]
