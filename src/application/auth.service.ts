@@ -148,7 +148,7 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const [accessToken, refreshToken] = await Promise.all([
       // 1. Access Token (Short-lived) - Use defaul app.module.ts signOptions
-      this.jwtService.signAsync({ sub: user.id, role: user.role }),
+      this.jwtService.signAsync({ sub: user.id, role: user.role, name: user.name, email: user.email }),
       // 2. Refresh Token (Long-lived)
       this.jwtService.signAsync(
         { sub: user.id }, // Keep the payload minimal
