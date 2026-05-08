@@ -6,4 +6,6 @@ export abstract class AuthRepository {
     abstract login(email: string, password: string): Promise<UserModel | null>;
     abstract updateRefreshTokenHash(id: string, refreshTokenHash: string, updatedAt: Date): Promise<void>;
     abstract getUserWithRefreshToken(id: string): Promise<{user: UserModel, refreshToken: string} | null>;
+    abstract getUserPassword(id: string): Promise<string | null>;
+    abstract updateUserPassword(id: string, newPasswordHash: string, updatedAt: Date): Promise<void>;
 }

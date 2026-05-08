@@ -8,6 +8,7 @@ import {
   Param,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './application/auth.service.js';
 import {
@@ -17,6 +18,10 @@ import {
 import { User as UserModel } from './domain/user.entity.js';
 import { LoginDto } from './application/login.dto.js';
 import { UpdateTokensDto } from './application/update-tokens.dto.js';
+import { ChangePasswordDto } from './application/change-password.dto.js';
+import { UserAuthorizationGuard } from './infrastructure/security/user.authorization.guard.js';
+import { User as ReqUser } from './infrastructure/security/user.decorator.js';
+
 
 @Controller('auth-ms')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -79,6 +84,19 @@ export class AppController {
       return await this.authService.updateTokensUseCase(updateTokensDto);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  @Post('user/change-password')
+  @UseGuards(UserAuthorizationGuard)
+  async changePassword(
+    @ReqUser('sub') userId: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    try {
+      return await this.authService.changePasswordUseCase(userId, changePasswordDto);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 }

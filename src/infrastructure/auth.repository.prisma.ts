@@ -118,4 +118,22 @@ export class PrismaAuthRepository implements AuthRepository {
             refreshToken: user.refreshToken,
         };
     }
+
+    async getUserPassword(id: string): Promise<string | null> {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            select: { password: true }
+        });
+        return user ? user.password : null;
+    }
+
+    async updateUserPassword(id: string, newPasswordHash: string, updatedAt: Date): Promise<void> {
+        await this.prisma.user.update({
+            where: { id },
+            data: {
+                password: newPasswordHash,
+                updatedAt,
+            },
+        });
+    }
 }

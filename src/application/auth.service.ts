@@ -8,6 +8,7 @@ import { GetUserDto } from './get-user.dto.js';
 import { LoginDto } from './login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateTokensDto } from './update-tokens.dto.js';
+import { ChangePasswordDto } from './change-password.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -141,6 +142,36 @@ export class AuthService {
     );
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
+
+  async changePasswordUseCase(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const currentPasswordHash = await this.repository.getUserPassword(userId);
+    if (!currentPasswordHash) {
+      throw new Error('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      currentPasswordHash,
+    );
+    if (!isMatch) {
+      throw new Error('Invalid current password');
+    }
+
+    const newPasswordHash = await bcrypt.hash(
+      changePasswordDto.newPassword,
+      10,
+    );
+    await this.repository.updateUserPassword(
+      userId,
+      newPasswordHash,
+      new Date(),
+    );
+
+    return { message: 'Password updated successfully' };
   }
 
   async generateTokens(
