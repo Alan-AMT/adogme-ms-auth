@@ -15,14 +15,16 @@ datasource db {
 }
 
 model User {
-  id           String   @id
-  email        String   @unique
-  password     String
-  name         String
-  role         Role
-  refreshToken String?
-  createdAt    DateTime
-  updatedAt    DateTime
+  id                  String    @id
+  email               String    @unique
+  password            String
+  name                String
+  role                Role
+  refreshToken        String?
+  resetPasswordToken  String?   @unique
+  resetPasswordExpiry DateTime?
+  createdAt           DateTime
+  updatedAt           DateTime
 
   @@schema("auth_service")
 }

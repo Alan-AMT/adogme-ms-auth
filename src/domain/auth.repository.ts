@@ -5,7 +5,10 @@ export abstract class AuthRepository {
     abstract getUserById(id: string): Promise<UserModel | null>;
     abstract login(email: string, password: string): Promise<UserModel | null>;
     abstract updateRefreshTokenHash(id: string, refreshTokenHash: string, updatedAt: Date): Promise<void>;
-    abstract getUserWithRefreshToken(id: string): Promise<{user: UserModel, refreshToken: string} | null>;
+    abstract getUserWithRefreshToken(id: string): Promise<{ user: UserModel, refreshToken: string } | null>;
     abstract getUserPassword(id: string): Promise<string | null>;
     abstract updateUserPassword(id: string, newPasswordHash: string, updatedAt: Date): Promise<void>;
+    abstract getUserByEmail(email: string): Promise<UserModel | null>;
+    abstract updateUserPasswordResetToken(id: string, resetPasswordToken: string, resetPasswordExpiry: Date, updatedAt: Date): Promise<void>;
+    abstract getUserWithResetToken(email: string): Promise<{ user: UserModel, resetPasswordToken: string, resetPasswordExpiry: Date } | null>;
 }

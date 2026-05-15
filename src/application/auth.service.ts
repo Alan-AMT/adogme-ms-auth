@@ -3,18 +3,23 @@ import { CreateAdopterDto } from './create-user.dto.js';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../domain/user.entity.js';
 import * as bcrypt from 'bcrypt';
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { GetUserDto } from './get-user.dto.js';
 import { LoginDto } from './login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateTokensDto } from './update-tokens.dto.js';
 import { ChangePasswordDto } from './change-password.dto.js';
+import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util.js';
+import crypto from "crypto";
+import { ResetPasswordDto } from './reset-password.dto.js';
+import { EmailSenderPort, EmailTemplate } from '../domain/email-sender.port.js';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly repository: AuthRepository,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailSenderPort,
   ) {}
 
   async createAdopterUseCase(user: CreateAdopterDto): Promise<{ user: User; accessToken: string; refreshToken: string }> {
@@ -237,5 +242,53 @@ export class AuthService {
       throw new Error('Provided refresh token is not valid');
     }
     return user;
+  }
+
+  async forgotPasswordUseCase(userEmail: string): Promise<{ message: string }> {
+    const user = await this.repository.getUserByEmail(userEmail);
+    if (!user) {
+      return { message: 'If the account exists, an email was sent.' };
+    }
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+    await this.repository.updateUserPasswordResetToken(
+      user.id,
+      resetToken,
+      resetTokenExpiry,
+      new Date(),
+    );
+    this.emailService.sendEmail({
+      to: userEmail,
+      subject: 'Reset Password',
+      template: EmailTemplate.PASSWORD_RESET,
+      context: {
+        url: `https://adogme.org/reset-password?token=${resetToken}&email=${userEmail}`,
+        name: user.name,
+      },
+    });
+    return { message: 'If the account exists, an email was sent.' };
+  }
+
+  async resetPasswordByTokenUseCase(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    const data = await this.repository.getUserWithResetToken(resetPasswordDto.email);
+    if (!data) {
+      throw new HttpErrorByCode[HttpStatus.UNAUTHORIZED]('Invalid credentials');
+    }
+    const { user, resetPasswordToken, resetPasswordExpiry } = data;
+    const currentDate = new Date();
+    if (resetPasswordExpiry <= currentDate || resetPasswordToken !== resetPasswordDto.token) {
+      throw new HttpErrorByCode[HttpStatus.UNAUTHORIZED]('Invalid credentials');
+    }
+    const newPasswordHash = await bcrypt.hash(
+      resetPasswordDto.newPassword,
+      10,
+    );
+    await this.repository.updateUserPassword(
+      user.id,
+      newPasswordHash,
+      new Date(),
+    );
+    //Send confirmation email
+    return { message: 'Password reset successfully' };
   }
 }

@@ -51,6 +51,7 @@ jobs:
           JWT_PRIVATE_KEY=MS_AUTH_JWT_PRIVATE_KEY:latest
           JWT_PUBLIC_KEY=MS_AUTH_JWT_PUBLIC_KEY:latest
           JWT_REFRESH_SECRET=MS_AUTH_JWT_REFRESH_SECRET:latest
+          RESEND_API_KEY=RESEND_API_KEY:latest
         # Ajustar según necesidades de seguridad
         # flags: '--allow-unauthenticated' 
         flags: '--no-allow-unauthenticated'

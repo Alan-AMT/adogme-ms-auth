@@ -6,6 +6,8 @@ import { AuthService } from './application/auth.service.js';
 import { AuthRepository } from './domain/auth.repository.js';
 import { PrismaAuthRepository } from './infrastructure/auth.repository.prisma.js';
 import { JwtModule } from '@nestjs/jwt';
+import { EmailSenderPort } from './domain/email-sender.port.js';
+import { ResendEmailAdapter } from './infrastructure/email/resend-email.adapter.js';
 
 @Module({
   imports: [
@@ -31,6 +33,10 @@ import { JwtModule } from '@nestjs/jwt';
       provide: AuthRepository,
       useClass: PrismaAuthRepository,
     },
+    {
+      provide: EmailSenderPort,
+      useClass: ResendEmailAdapter,
+    }
   ],
 })
 export class AppModule {}

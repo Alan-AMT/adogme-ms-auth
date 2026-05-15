@@ -21,6 +21,7 @@ import { UpdateTokensDto } from './application/update-tokens.dto.js';
 import { ChangePasswordDto } from './application/change-password.dto.js';
 import { UserAuthorizationGuard } from './infrastructure/security/user.authorization.guard.js';
 import { User as ReqUser } from './infrastructure/security/user.decorator.js';
+import { ResetPasswordDto } from './application/reset-password.dto.js';
 
 
 @Controller('auth-ms')
@@ -98,5 +99,19 @@ export class AppController {
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  @Post('user/forgot-password')
+  async forgotPassword(
+    @Body() data: { email: string },
+  ): Promise<{ message: string }> {
+    return await this.authService.forgotPasswordUseCase(data.email);
+  }
+
+  @Post('user/reset-password')
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return await this.authService.resetPasswordByTokenUseCase(resetPasswordDto);
   }
 }

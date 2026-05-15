@@ -136,4 +136,67 @@ export class PrismaAuthRepository implements AuthRepository {
             },
         });
     }
+
+    async getUserByEmail(email: string): Promise<User | null> {
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+            }
+        });
+        if (!user) {
+            return null;
+        }
+        return new User(
+            user.id,
+            user.email,
+            user.name,
+            user.role,
+            user.createdAt,
+            user.updatedAt
+        );
+    }
+
+    async updateUserPasswordResetToken(id: string, resetPasswordToken: string, resetPasswordExpiry: Date, updatedAt: Date): Promise<void> {
+        await this.prisma.user.update({
+            where: { id },
+            data: {
+                resetPasswordToken,
+                resetPasswordExpiry,
+                updatedAt,
+            },
+        });
+    }
+
+    async getUserWithResetToken(email: string): Promise<{user: User, resetPasswordToken: string, resetPasswordExpiry: Date} | null> {
+        const user = await this.prisma.user.findUnique({
+            where: { email: email },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+                resetPasswordToken: true,
+                resetPasswordExpiry: true,
+            }
+        });
+        if (!user) {
+            return null;
+        }
+        return {user: new User(
+            user.id,
+            user.email,
+            user.name,
+            user.role,
+            user.createdAt,
+            user.updatedAt
+        ), resetPasswordToken: user.resetPasswordToken ?? "", resetPasswordExpiry: user.resetPasswordExpiry ?? new Date()};
+    }
 }
