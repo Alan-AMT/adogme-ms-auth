@@ -4,6 +4,7 @@ import { EmailSenderPort, SendEmailParams, EmailTemplate } from '../../domain/em
 import { ConfigService } from '@nestjs/config';
 import Handlebars from 'handlebars';
 import { resetPasswordTemplate } from './templates/reset-password.template.js';
+import { shelterCreatedTemplate } from './templates/shelter-created.template.js';
 
 
 @Injectable()
@@ -51,6 +52,8 @@ export class ResendEmailAdapter implements EmailSenderPort {
     switch (template) {
       case EmailTemplate.PASSWORD_RESET:
         return Handlebars.compile(resetPasswordTemplate)(context);
+      case EmailTemplate.SHELTER_CREATED:
+        return Handlebars.compile(shelterCreatedTemplate)(context);
       default:
         return `<p>New notification from Adogme</p>`;
     }

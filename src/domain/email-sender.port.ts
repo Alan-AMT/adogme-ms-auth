@@ -7,6 +7,7 @@ export interface SendEmailParams {
 
 export enum EmailTemplate {
   PASSWORD_RESET = 'password-reset',
+  SHELTER_CREATED = 'shelter-created',
 }
 
 export abstract class EmailSenderPort {

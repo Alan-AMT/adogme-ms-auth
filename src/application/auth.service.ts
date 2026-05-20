@@ -69,6 +69,12 @@ export class AuthService {
       hashedRefreshToken,
       new Date(),
     );
+    this.emailService.sendEmail({
+      to: 'alanx015@hotmail.com',
+      subject: 'Nuevo shelter registrado',
+      template: EmailTemplate.SHELTER_CREATED,
+      context: { userId: shelterToCreate.id, userEmail: shelterToCreate.email },
+    });
     return {
       user: shelterToCreate,
       accessToken,
