@@ -10,7 +10,6 @@ export class CreateAdopterDto {
 
   @IsString()
   password: string;
-
 }
 
 export class CreateShelterDto {
@@ -21,8 +20,6 @@ export class CreateShelterDto {
   @IsString()
   name: string;
 
-
   @IsString()
   password: string;
-
 }

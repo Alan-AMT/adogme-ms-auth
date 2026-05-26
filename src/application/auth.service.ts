@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UpdateTokensDto } from './update-tokens.dto.js';
 import { ChangePasswordDto } from './change-password.dto.js';
 import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util.js';
-import crypto from "crypto";
+import crypto from 'crypto';
 import { ResetPasswordDto } from './reset-password.dto.js';
 import { EmailSenderPort, EmailTemplate } from '../domain/email-sender.port.js';
 
@@ -22,7 +22,9 @@ export class AuthService {
     private readonly emailService: EmailSenderPort,
   ) {}
 
-  async createAdopterUseCase(user: CreateAdopterDto): Promise<{ user: User; accessToken: string; refreshToken: string }> {
+  async createAdopterUseCase(
+    user: CreateAdopterDto,
+  ): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     const date = new Date();
     const adopterToCreate = new User(
       uuidv4(),
@@ -34,7 +36,8 @@ export class AuthService {
     );
     const hashedPassword = await bcrypt.hash(user.password, 10);
     await this.repository.createUser(adopterToCreate, hashedPassword);
-    const { accessToken, refreshToken } = await this.generateTokens(adopterToCreate);
+    const { accessToken, refreshToken } =
+      await this.generateTokens(adopterToCreate);
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await this.repository.updateRefreshTokenHash(
@@ -49,7 +52,9 @@ export class AuthService {
     };
   }
 
-  async createShelterUseCase(user: CreateAdopterDto): Promise<{ user: User; accessToken: string; refreshToken: string }> {
+  async createShelterUseCase(
+    user: CreateAdopterDto,
+  ): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     const date = new Date();
     const shelterToCreate = new User(
       uuidv4(),
@@ -61,7 +66,8 @@ export class AuthService {
     );
     const hashedPassword = await bcrypt.hash(user.password, 10);
     await this.repository.createUser(shelterToCreate, hashedPassword);
-    const { accessToken, refreshToken } = await this.generateTokens(shelterToCreate);
+    const { accessToken, refreshToken } =
+      await this.generateTokens(shelterToCreate);
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await this.repository.updateRefreshTokenHash(
@@ -190,7 +196,12 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const [accessToken, refreshToken] = await Promise.all([
       // 1. Access Token (Short-lived) - Use defaul app.module.ts signOptions
-      this.jwtService.signAsync({ sub: user.id, role: user.role, name: user.name, email: user.email }),
+      this.jwtService.signAsync({
+        sub: user.id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+      }),
       // 2. Refresh Token (Long-lived)
       this.jwtService.signAsync(
         { sub: user.id }, // Keep the payload minimal
@@ -275,20 +286,24 @@ export class AuthService {
     return { message: 'If the account exists, an email was sent.' };
   }
 
-  async resetPasswordByTokenUseCase(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
-    const data = await this.repository.getUserWithResetToken(resetPasswordDto.email);
+  async resetPasswordByTokenUseCase(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    const data = await this.repository.getUserWithResetToken(
+      resetPasswordDto.email,
+    );
     if (!data) {
       throw new HttpErrorByCode[HttpStatus.UNAUTHORIZED]('Invalid credentials');
     }
     const { user, resetPasswordToken, resetPasswordExpiry } = data;
     const currentDate = new Date();
-    if (resetPasswordExpiry <= currentDate || resetPasswordToken !== resetPasswordDto.token) {
+    if (
+      resetPasswordExpiry <= currentDate ||
+      resetPasswordToken !== resetPasswordDto.token
+    ) {
       throw new HttpErrorByCode[HttpStatus.UNAUTHORIZED]('Invalid credentials');
     }
-    const newPasswordHash = await bcrypt.hash(
-      resetPasswordDto.newPassword,
-      10,
-    );
+    const newPasswordHash = await bcrypt.hash(resetPasswordDto.newPassword, 10);
     await this.repository.updateUserPassword(
       user.id,
       newPasswordHash,
@@ -296,5 +311,32 @@ export class AuthService {
     );
     //Send confirmation email
     return { message: 'Password reset successfully' };
+  }
+
+  async updateUserNameUseCase(
+    targetUserId: string,
+    tokenUserId: string,
+    name: string,
+  ): Promise<User> {
+    if (targetUserId !== tokenUserId) {
+      throw new Error('Forbidden: You are not authorized to update this user');
+    }
+
+    const user = await this.repository.getUserById(targetUserId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const updatedAt = new Date();
+    await this.repository.updateUserName(targetUserId, name, updatedAt);
+
+    return new User(
+      user.id,
+      user.email,
+      name,
+      user.role,
+      user.createdAt,
+      updatedAt,
+    );
   }
 }

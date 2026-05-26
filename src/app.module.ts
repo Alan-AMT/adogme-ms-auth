@@ -36,7 +36,7 @@ import { ResendEmailAdapter } from './infrastructure/email/resend-email.adapter.
     {
       provide: EmailSenderPort,
       useClass: ResendEmailAdapter,
-    }
+    },
   ],
 })
 export class AppModule {}

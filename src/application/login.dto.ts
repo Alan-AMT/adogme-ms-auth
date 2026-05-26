@@ -7,5 +7,4 @@ export class LoginDto {
 
   @IsString()
   password: string;
-
 }

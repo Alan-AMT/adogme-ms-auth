@@ -9,6 +9,7 @@ import {
   HttpException,
   HttpStatus,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { AuthService } from './application/auth.service.js';
 import {
@@ -22,7 +23,7 @@ import { ChangePasswordDto } from './application/change-password.dto.js';
 import { UserAuthorizationGuard } from './infrastructure/security/user.authorization.guard.js';
 import { User as ReqUser } from './infrastructure/security/user.decorator.js';
 import { ResetPasswordDto } from './application/reset-password.dto.js';
-
+import { UpdateNameDto } from './application/update-name.dto.js';
 
 @Controller('auth-ms')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -95,7 +96,10 @@ export class AppController {
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string }> {
     try {
-      return await this.authService.changePasswordUseCase(userId, changePasswordDto);
+      return await this.authService.changePasswordUseCase(
+        userId,
+        changePasswordDto,
+      );
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
@@ -113,5 +117,32 @@ export class AppController {
     @Body() resetPasswordDto: ResetPasswordDto,
   ): Promise<{ message: string }> {
     return await this.authService.resetPasswordByTokenUseCase(resetPasswordDto);
+  }
+
+  @Patch('user/:id/name')
+  @UseGuards(UserAuthorizationGuard)
+  async updateUserName(
+    @Param('id') id: string,
+    @ReqUser('sub') tokenUserId: string,
+    @Body() updateNameDto: UpdateNameDto,
+  ): Promise<UserModel> {
+    try {
+      return await this.authService.updateUserNameUseCase(
+        id,
+        tokenUserId,
+        updateNameDto.name,
+      );
+    } catch (error) {
+      if (
+        error.message.includes('Forbidden') ||
+        error.message.includes('authorized')
+      ) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      if (error.message === 'User not found') {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 }
